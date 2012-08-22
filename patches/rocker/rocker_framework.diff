@@ -1,0 +1,106 @@
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index ad28096..4e8eb77 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -1998,6 +1998,12 @@ public final class Settings {
+         public static final String POINTER_SPEED = "pointer_speed";
+ 
+         /**
++         * Whether or not volume button music controls should be enabled to seek media tracks
++         * @hide
++         */
++        public static final String VOLBTN_MUSIC_CONTROLS = "volbtn_music_controls";
++
++        /**
+          * Settings to backup. This is here so that it's in the same place as the settings
+          * keys and easy to update.
+          *
+diff --git a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+index 25da642..0f4abc8 100755
+--- a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
++++ b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+@@ -479,6 +479,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     boolean mScreenSaverMayRun = true; // false if a wakelock is held
+     boolean mPluggedIn;
+ 
++    // Behavior of volbtn music controls
++    boolean mVolBtnMusicControls;
++    boolean mIsLongPress;
++
+     // Behavior of ENDCALL Button.  (See Settings.System.END_BUTTON_BEHAVIOR.)
+     int mEndcallBehavior;
+ 
+@@ -519,6 +523,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     private static final int MSG_DISABLE_POINTER_LOCATION = 2;
+     private static final int MSG_DISPATCH_MEDIA_KEY_WITH_WAKE_LOCK = 3;
+     private static final int MSG_DISPATCH_MEDIA_KEY_REPEAT_WITH_WAKE_LOCK = 4;
++    private static final int MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK = 5;
+ 
+     private class PolicyHandler extends Handler {
+         @Override
+@@ -536,6 +541,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                 case MSG_DISPATCH_MEDIA_KEY_REPEAT_WITH_WAKE_LOCK:
+                     dispatchMediaKeyRepeatWithWakeLock((KeyEvent)msg.obj);
+                     break;
++                case MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK:
++                    dispatchMediaKeyWithWakeLockToAudioService((KeyEvent)msg.obj);
++                    dispatchMediaKeyWithWakeLockToAudioService(KeyEvent.changeAction((KeyEvent)msg.obj, KeyEvent.ACTION_UP));
++                    mIsLongPress = true;
++                    break;
+             }
+         }
+     }
+@@ -559,6 +569,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+             resolver.registerContentObserver(Settings.Secure.getUriFor(
+                     Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR), false, this);
+             resolver.registerContentObserver(Settings.System.getUriFor(
++                    Settings.System.VOLBTN_MUSIC_CONTROLS), false, this);
++            resolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.ACCELEROMETER_ROTATION), false, this);
+             resolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.USER_ROTATION), false, this);
+@@ -1094,6 +1106,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+             mIncallPowerBehavior = Settings.Secure.getInt(resolver,
+                     Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR,
+                     Settings.Secure.INCALL_POWER_BUTTON_BEHAVIOR_DEFAULT);
++            mVolBtnMusicControls = (Settings.System.getInt(resolver,
++                    Settings.System.VOLBTN_MUSIC_CONTROLS, 1) == 1);
+ 
+             // Configure rotation lock.
+             int userRotation = Settings.System.getInt(resolver,
+@@ -3332,14 +3346,30 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                             Log.w(TAG, "ITelephony threw RemoteException", ex);
+                         }
+                     }
+-
+-                    if (isMusicActive() && (result & ACTION_PASS_TO_USER) == 0) {
+-                        // If music is playing but we decided not to pass the key to the
+-                        // application, handle the volume change here.
+-                        handleVolumeKey(AudioManager.STREAM_MUSIC, keyCode);
++                }
++                if (isMusicActive() && (result & ACTION_PASS_TO_USER) == 0) {
++                    if (mVolBtnMusicControls && down && (keyCode != KeyEvent.KEYCODE_VOLUME_MUTE)) {
++                        mIsLongPress = false;
++                        int newKeyCode = event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP ?
++                                KeyEvent.KEYCODE_MEDIA_NEXT : KeyEvent.KEYCODE_MEDIA_PREVIOUS;
++                        Message msg = mHandler.obtainMessage(MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK,
++                                new KeyEvent(event.getDownTime(), event.getEventTime(), event.getAction(), newKeyCode, 0));
++                        msg.setAsynchronous(true);
++                        mHandler.sendMessageDelayed(msg, ViewConfiguration.getLongPressTimeout());
+                         break;
++                    } else {
++                        if (mVolBtnMusicControls && !down) {
++                            mHandler.removeMessages(MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK);
++                            if (mIsLongPress) {
++                                break;
++                            }
++                        }
++                        if (!isScreenOn) {
++                            handleVolumeKey(AudioManager.STREAM_MUSIC, keyCode);
++                        }
+                     }
+                 }
++
+                 break;
+             }
+ 
