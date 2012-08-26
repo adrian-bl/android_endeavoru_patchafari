@@ -1,0 +1,54 @@
+diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
+index b5f072f..fe66d1e 100644
+--- a/res/xml/display_settings.xml
++++ b/res/xml/display_settings.xml
+@@ -32,6 +32,11 @@
+             android:key="accelerometer"
+             android:title="@string/accelerometer_title"/>
+ 
++        <CheckBoxPreference
++            android:key="avoid_rotation_flip"
++            android:title="Disable flipping"
++            android:summary="Never rotate screen by 180 degrees" />
++
+         <ListPreference
+                 android:key="screen_timeout"
+                 android:title="@string/screen_timeout"
+diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
+index fc162e2..ca45d8c 100644
+--- a/src/com/android/settings/DisplaySettings.java
++++ b/src/com/android/settings/DisplaySettings.java
+@@ -48,11 +48,13 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+ 
+     private static final String KEY_SCREEN_TIMEOUT = "screen_timeout";
+     private static final String KEY_ACCELEROMETER = "accelerometer";
++    private static final String KEY_AVOID_FLIP = "avoid_rotation_flip";
+     private static final String KEY_FONT_SIZE = "font_size";
+     private static final String KEY_NOTIFICATION_PULSE = "notification_pulse";
+     private static final String KEY_SCREEN_SAVER = "screensaver";
+ 
+     private CheckBoxPreference mAccelerometer;
++    private CheckBoxPreference mAvoidFlip;
+     private ListPreference mFontSizePref;
+     private CheckBoxPreference mNotificationPulse;
+ 
+@@ -84,6 +86,8 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+             getPreferenceScreen().removePreference(mAccelerometer);
+         }
+ 
++        mAvoidFlip = (CheckBoxPreference) findPreference(KEY_AVOID_FLIP);
++
+         mScreenSaverPreference = findPreference(KEY_SCREEN_SAVER);
+         if (mScreenSaverPreference != null
+                 && getResources().getBoolean(
+@@ -258,6 +262,10 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+         if (preference == mAccelerometer) {
+             RotationPolicy.setRotationLockForAccessibility(
+                     getActivity(), !mAccelerometer.isChecked());
++        } else if (preference == mAvoidFlip) {
++            boolean value = mAvoidFlip.isChecked();
++            Settings.System.putInt(getContentResolver(), Settings.System.AVOID_ROTATION_FLIP,
++                    value ? 1 : 0);
+         } else if (preference == mNotificationPulse) {
+             boolean value = mNotificationPulse.isChecked();
+             Settings.System.putInt(getContentResolver(), Settings.System.NOTIFICATION_LIGHT_PULSE,

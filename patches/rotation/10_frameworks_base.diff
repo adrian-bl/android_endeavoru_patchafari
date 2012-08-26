@@ -1,0 +1,57 @@
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index ad28096..b955c9a 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -1740,6 +1740,11 @@ public final class Settings {
+         public static final String ACCELEROMETER_ROTATION = "accelerometer_rotation";
+ 
+         /**
++         * Never flips the screen to 180 degree if enabled
++        */
++        public static final String AVOID_ROTATION_FLIP = "avoid_rotation_flip";
++
++        /**
+          * Default screen rotation when no other policy applies.
+          * When {@link #ACCELEROMETER_ROTATION} is zero and no on-screen Activity expresses a
+          * preference, this rotation value will be used. Must be one of the
+diff --git a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+index 25da642..b8f7401 100755
+--- a/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
++++ b/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+@@ -493,6 +493,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+     int mPortraitRotation = 0;   // default portrait rotation
+     int mUpsideDownRotation = 0; // "other" portrait rotation
+ 
++    boolean mAvoidRotationFlip;
++
+     // What we do when the user long presses on home
+     private int mLongPressOnHomeBehavior = -1;
+ 
+@@ -563,6 +565,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+             resolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.USER_ROTATION), false, this);
+             resolver.registerContentObserver(Settings.System.getUriFor(
++                    Settings.System.AVOID_ROTATION_FLIP), false, this);
++            resolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.SCREEN_OFF_TIMEOUT), false, this);
+             resolver.registerContentObserver(Settings.System.getUriFor(
+                     Settings.System.POINTER_LOCATION), false, this);
+@@ -1112,6 +1116,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                 updateOrientationListenerLp();
+             }
+ 
++            mAvoidRotationFlip = (Settings.System.getInt(resolver,
++                    Settings.System.AVOID_ROTATION_FLIP, 1) == 1);
++
+             if (mSystemReady) {
+                 int pointerLocation = Settings.System.getInt(resolver,
+                         Settings.System.POINTER_LOCATION, 0);
+@@ -3788,7 +3795,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+                             com.android.internal.R.bool.config_allowAllRotations) ? 1 : 0;
+                 }
+                 if (sensorRotation != Surface.ROTATION_180
+-                        || mAllowAllRotations == 1
++                        || ( mAllowAllRotations == 1 && mAvoidRotationFlip == false )
+                         || orientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR) {
+                     preferredRotation = sensorRotation;
+                 } else {
