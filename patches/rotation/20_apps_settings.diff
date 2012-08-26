@@ -7,7 +7,7 @@ index b5f072f..fe66d1e 100644
              android:title="@string/accelerometer_title"/>
  
 +        <CheckBoxPreference
-+            android:key="avoid_rotation_flip"
++            android:key="px_avoid_rotation_flip"
 +            android:title="Disable flipping"
 +            android:summary="Never rotate screen by 180 degrees" />
 +
@@ -22,7 +22,7 @@ index fc162e2..ca45d8c 100644
  
      private static final String KEY_SCREEN_TIMEOUT = "screen_timeout";
      private static final String KEY_ACCELEROMETER = "accelerometer";
-+    private static final String KEY_AVOID_FLIP = "avoid_rotation_flip";
++    private static final String KEY_AVOID_FLIP = "px_avoid_rotation_flip";
      private static final String KEY_FONT_SIZE = "font_size";
      private static final String KEY_NOTIFICATION_PULSE = "notification_pulse";
      private static final String KEY_SCREEN_SAVER = "screensaver";

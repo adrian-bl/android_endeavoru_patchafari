@@ -8,7 +8,7 @@ index ad28096..b955c9a 100644
          /**
 +         * Never flips the screen to 180 degree if enabled
 +        */
-+        public static final String AVOID_ROTATION_FLIP = "avoid_rotation_flip";
++        public static final String AVOID_ROTATION_FLIP = "px_avoid_rotation_flip";
 +
 +        /**
           * Default screen rotation when no other policy applies.
