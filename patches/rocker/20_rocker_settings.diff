@@ -7,7 +7,7 @@ index 6da9734..a24725a 100644
              android:defaultValue="true" />
  
 +    <CheckBoxPreference
-+            android:key="volbtn_music_controls"
++            android:key="px_volbtn_music_controls"
 +            android:title="Enable Volume Rocker"
 +            android:summary="Use vol +/- to skip tracks if screen is off"
 +            android:persistent="false" />
@@ -23,7 +23,7 @@ index 67557b9..260c476 100644
      private static final String KEY_RINGTONE = "ringtone";
      private static final String KEY_NOTIFICATION_SOUND = "notification_sound";
      private static final String KEY_CATEGORY_CALLS = "category_calls_and_notification";
-+    private static final String KEY_VOLBTN_MUSIC_CTRL = "volbtn_music_controls";
++    private static final String KEY_VOLBTN_MUSIC_CTRL = "px_volbtn_music_controls";
  
      private static final String[] NEED_VOICE_CAPABILITY = {
              KEY_RINGTONE, KEY_DTMF_TONE, KEY_CATEGORY_CALLS,
