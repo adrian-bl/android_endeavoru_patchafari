@@ -1,5 +1,5 @@
 diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
-index b5f072f..fe66d1e 100644
+index b5f072f..efcb957 100644
 --- a/res/xml/display_settings.xml
 +++ b/res/xml/display_settings.xml
 @@ -32,6 +32,11 @@
@@ -15,7 +15,7 @@ index b5f072f..fe66d1e 100644
                  android:key="screen_timeout"
                  android:title="@string/screen_timeout"
 diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
-index fc162e2..ca45d8c 100644
+index fc162e2..d5c3e74 100644
 --- a/src/com/android/settings/DisplaySettings.java
 +++ b/src/com/android/settings/DisplaySettings.java
 @@ -48,11 +48,13 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
@@ -32,16 +32,18 @@ index fc162e2..ca45d8c 100644
      private ListPreference mFontSizePref;
      private CheckBoxPreference mNotificationPulse;
  
-@@ -84,6 +86,8 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+@@ -84,6 +86,10 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
              getPreferenceScreen().removePreference(mAccelerometer);
          }
  
 +        mAvoidFlip = (CheckBoxPreference) findPreference(KEY_AVOID_FLIP);
++        mAvoidFlip.setChecked(Settings.System.getInt(resolver,
++                Settings.System.AVOID_ROTATION_FLIP, 1) != 0);
 +
          mScreenSaverPreference = findPreference(KEY_SCREEN_SAVER);
          if (mScreenSaverPreference != null
                  && getResources().getBoolean(
-@@ -258,6 +262,10 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
+@@ -258,6 +264,10 @@ public class DisplaySettings extends SettingsPreferenceFragment implements
          if (preference == mAccelerometer) {
              RotationPolicy.setRotationLockForAccessibility(
                      getActivity(), !mAccelerometer.isChecked());
